@@ -1,0 +1,192 @@
+
+* 1  2021.05.10  Vectors in Emacs Lisp
+#1  18:26  
+(setq vector [10 20 30])            ; a new vector can be created immediately
+(aref vector 1) = 20
+(aset vector 1 22)
+vector = [10 22 30]
+
+* 1.1  2021.05.16  Vectors in Emacs Lisp
+#1.1 18:14
+(setq vec (vector 1 2 3))           ; 'vector' function creates a new vector
+(aref vec 1)
+(aref vec 2)
+(aset vec 0 11)
+vec
+
+
+* 1.1.1  2022.05.29  with variables
+#1.1.1  14:18  
+(defun quadratic-formula (a b c)
+    (let (x1 x2 Delta)
+        (setq Delta (- (* b b) (* 4 a c)))
+	(setq x1 (/ (+ (- b) (sqrt Delta)) (* 2 a)))
+	(setq x2 (/ (- (- b) (sqrt Delta)) (* 2 a)))
+	(vector x1 x2)
+    )
+)
+
+* 1.2  2021.05.11  make-vector
+#1.2  12:28
+(make-vector 10 "0")
+
+
+* 1.3  2022.04.11  2D vectors
+#1.3  02:11
+(defun vector-magnitude (vec)
+    "2d"
+    (let (x y)
+        (setq x (aref vec 0))
+	(setq y (aref vec 1))
+	(sqrt (+ (* x x) (* y y)))
+    )
+)
+
+; (vector-magnitude [1 2])
+
+(defun vector-sum (vec1 vec2)
+    "2d"
+    (let (x1 y1 x2 y2 x3 y3)
+        (setq x1 (aref vec1 0))
+	(setq y1 (aref vec1 1))
+	(setq x2 (aref vec2 0))
+	(setq y2 (aref vec2 1))
+	(setq x3 (+ x1 x2))
+	(setq y3 (+ y1 y2))
+	(vector x3 y3)
+    )
+)
+
+; (vector-sum [2 3] [5 8])
+
+(defun vector-scalar-multiple (vec scal)
+    "2d"
+    (let (x y x2 y2)
+        (setq x (aref vec 0))
+	(setq y (aref vec 1))
+	(setq x2 (* x scal))
+	(setq y2 (* y scal))
+	(vector x2 y2)
+    )
+)
+
+; (vector-scalar-multiple [3 5] 8)
+
+(defun vector-difference (vec1 vec2)
+    (vector-sum vec1 (vector-scalar-multiple vec2 -1))
+)
+
+(defun vector-normalized (vec)
+    (let (norm)
+        (setq norm (vector-magnitude vec))
+	(vector-scalar-multiple vec (/ 1 norm))
+    )
+)
+
+(defun vector-right-rotate (vec)
+    "Counterclockwise right-angle rotation of a 2D vector."
+    (let (x y)
+        (setq x (aref vec 0))
+	(setq y (aref vec 1))
+	(vector (- y) x)
+    )
+)
+
+
+* 2  2022.07.16  vector-tail (Emacs Lisp)
+#2  05:53  
+(defun vector-tail (vect)
+  (let (newvect newvectlen i)
+    (setq newvectlen (- (length vect) 1))
+    (setq newvect (make-vector newvectlen 0))
+    (setq i 0)
+    (while (< i (length newvect))
+      (aset newvect i (aref vect (+ i 1)))
+      (setq i (+ i 1))
+    )
+    newvect
+  )
+)
+
+
+* 3  2022.07.25  reverse vector
+#3  01:25
+(defun reverse-vector (vect)
+  (let (newvect i j component)
+    (setq newvect (make-vector (length vect) 0))
+    (setq i 0)
+    (while (< i (length vect))
+      (setq j (- (length vect) i 1))
+      (setq component (aref vect j))
+      (aset newvect i component)
+      (setq i (+ i 1))
+    )
+    newvect
+  )
+)
+
+
+* 4  2022.07.25  copy vector
+#4  01:43
+(defun copy-vector (vect)
+  (let (newvect i component)
+    (setq newvect (make-vector (length vect) 0))
+    (setq i 0)
+    (while (< i (length vect))
+      (setq component (aref vect i))
+      (aset newvect i component)
+      (setq i (+ i 1))
+    )
+    newvect
+  )
+)
+
+
+* 5  2022.07.25  concatenate vectors
+#5  09:32
+(defun concatenate-vectors (vect1 vect2)
+  (let (vect3 len1 len2 len3 i comp)
+    (setq len1 (length vect1))
+    (setq len2 (length vect2))
+    (setq len3 (+ len1 len2))
+    (setq vect3 (make-vector len3 0))
+    (setq i 0)
+    (while (< i len1)
+      (setq comp (aref vect1 i))
+      (aset vect3 i comp)
+      (setq i (+ i 1))
+    )
+    (setq i 0)
+    (while (< i len2)
+      (setq comp (aref vect2 i))
+      (aset vect3 (+ len1 i) comp)
+      (setq i (+ i 1))
+    )
+    vect3
+  )
+)
+
+
+* 6  2022.07.25  Emacs Lisp: numerical vector to string
+#6  11:38
+(defun numerical-vector-to-string (poly)
+  (let (str i component)
+    (setq str "[")
+    (setq i 0)
+    (while (< i (length poly))
+      (setq component (aref poly i))
+      (setq str (concat str (number-to-string component)))
+      (setq i (+ i 1))
+      (if (< i (length poly))
+        (setq str (concat str " "))
+      )
+    )  ; end while
+    (setq str (concat str "]"))
+    str
+  )
+)
+
+
+
+* See also
+- [[funicular polygon]]
