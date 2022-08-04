@@ -261,7 +261,7 @@
 	      (setq L (project-second-byte-from-double-byte sum))
 	    )
 	  )
-	  ((= hexdit2 10)                  ; 0A : LDAX B   [LD A, (BC)]
+	  ((= hexdit2 10)                  ; 0A : LDAX B        [LD A, (BC)]
 	    (y-or-n-p "LDAX B")
 	    (let (address extraction)
               (setq address (present-hexadecimal-BE (concatenate-vectors (binary-to-hexadecimal-BE B) (binary-to-hexadecimal-BE C))))
@@ -302,7 +302,7 @@
       )
       ((= hexdit1 1)            ; 1_
         (cond
-	  ((= hexdit2 1)                   ; 11 : LXI D, nn         [LD DE, nn]
+	  ((= hexdit2 1)                   ; 11 nn : LXI D, nn         [LD DE, nn]
             (y-or-n-p "LXI D, nn")
 	    (let (hexdit3 hexdit4 hexdit5 hexdit6)       ; not swapped order, because it is immediate, not an address
               (setq hexdit3 (aref hexV 2))
@@ -338,7 +338,7 @@
             (y-or-n-p "DCR D")
             (setq D (decrement-byte-BE (copy-vector D)))
 	  )
-	  ((= hexdit2 6)                   ; 16 : MVI D, n
+	  ((= hexdit2 6)                   ; 16 n : MVI D, n
             (y-or-n-p "MVI D, n")
 	    (let (hexdit3 hexdit4)
               (setq hexdit3 (aref hexV 2))
@@ -401,7 +401,7 @@
       )
       ((= hexdit1 2)            ; 2_
         (cond
-	  ((= hexdit2 1)          ; 21 : LXI H, nn
+	  ((= hexdit2 1)          ; 21 nn : LXI H, nn
 	    (y-or-n-p "LXI H, nn")
 	    (let (hexdit3 hexdit4 hexdit5 hexdit6)       ; not swapped order, because it is immediate, not an address
               (setq hexdit3 (aref hexV 2))
@@ -412,7 +412,7 @@
 	      (setq L (hexadecimal-to-binary-BE (vector hexdit5 hexdit6)))
 	    )
 	  )
-	  ((= hexdit2 2)          ; 22 nN : SHLD nN       [LD (nn), HL]
+	  ((= hexdit2 2)          ; 22 nN : SHLD BIGVAR       [LD (nn), HL]
             (let (hexdit3 hexdit4 hexdit5 hexdit6 address hex0V)
 	      (y-or-n-p "SHLD nN")
 	      (setq hexdit3 (aref hexV 2))
@@ -448,7 +448,7 @@
             (y-or-n-p "DCR H")
             (setq H (decrement-byte-BE (copy-vector H)))
 	  )
-	  ((= hexdit2 6)          ; 26 : MVI H, n
+	  ((= hexdit2 6)          ; 26 n : MVI H, n
             (y-or-n-p "MVI H, n")
 	    (let (hexdit3 hexdit4)
               (setq hexdit3 (aref hexV 2))
@@ -465,7 +465,7 @@
 	      (setq L (project-second-byte-from-double-byte sum))
 	    )
 	  )
-	  ((= hexdit2 10)         ; 2A : LHLD nN        [HL <- (nN)]
+	  ((= hexdit2 10)         ; 2A nN : LHLD BIGVAR        [HL <- (nN)]
 	    (let (hexdit3 hexdit4 hexdit5 hexdit6 address extraction)
 	      (y-or-n-p "LHLD nN")
               (setq hexdit3 (aref hexV 2))
@@ -504,7 +504,7 @@
             (y-or-n-p "DCR L")
             (setq L (decrement-byte-BE (copy-vector L)))
 	  )
-	  ((= hexdit2 14)            ; 2E : MVI L, n
+	  ((= hexdit2 14)            ; 2E n : MVI L, n
 	    (y-or-n-p "MVI L, n")
 	    (let (hexdit3 hexdit4)
               (setq hexdit3 (aref hexV 2))
@@ -520,7 +520,7 @@
       )
       ((= hexdit1 3)        ; 3_
         (cond
-	  ((= hexdit2 1)            ; 31 : LXI SP, nn
+	  ((= hexdit2 1)            ; 31 nn : LXI SP, nn
 	    (y-or-n-p "LXI SP, nn")
 	    (let (hexdit3 hexdit4 hexdit5 hexdit6 vect)
               (setq hexdit3 (aref hexV 2))
@@ -532,7 +532,7 @@
 	      (setq SP (hexadecimal-to-binary-BE vect))
 	    )
 	  )
-	  ((= hexdit2 2)          ; 32 : STA nN
+	  ((= hexdit2 2)          ; 32 nN : STA VARNAM
 	    (y-or-n-p "STA nN: Store register A into the location in memory addressed by nN.")
 	    (let (hexdit3 hexdit4 hexdit5 hexdit6 address)
               (setq hexdit3 (aref hexV 2))
@@ -573,7 +573,7 @@
 	      (RAM-store address bytebinV)
 	    )
 	  )
-	  ((= hexdit2 6)          ; 36 : MVI M, n      [MVI (HL), n]
+	  ((= hexdit2 6)          ; 36 n : MVI M, n      [MVI (HL), n]
 	    (y-or-n-p "MVI M, n")
 	    (let (hexdit3 hexdit4 storee hex1V hex2V address)
               (setq hexdit3 (aref hexV 2))
@@ -599,7 +599,7 @@
 	      (setq L (project-second-byte-from-double-byte sum))
 	    )
 	  )
-	  ((= hexdit2 10)         ; 3A nN : LDA nN     [LD A, (nn)]
+	  ((= hexdit2 10)         ; 3A nN : LDA VARNAM     [LD A, (nn)]
 	    (y-or-n-p "LDA nN")
 	    (let (hexdit3 hexdit4 hexdit5 hexdit6 address extraction)
               (setq hexdit3 (aref hexV 2))
@@ -619,7 +619,7 @@
             (y-or-n-p "INR A")
             (setq A (increment-byte-BE (copy-vector A)))
 	  )
-	  ((= hexdit2 14)       ; 3E : MVI A, n
+	  ((= hexdit2 14)       ; 3E n : MVI A, n
 	    (y-or-n-p "MVI A, n")
 	    (let (hexdit3 hexdit4)
               (setq hexdit3 (aref hexV 2))
@@ -929,7 +929,7 @@
 	      (setq A (add-bytes-with-carry-BE accumulator addend))
 	    )
 	  )
-	  ((= hexdit2 14)        ; 8E : ADC (HL)
+	  ((= hexdit2 14)        ; 8E : ADC M
 	    (y-or-n-p "ADC M")
             (let (address addend accumulator)
               (setq address (present-hexadecimal-BE (binary-to-hexadecimal-BE (concatenate-vectors H L))))
@@ -1203,7 +1203,7 @@
 	      (setq SP (increment-double-byte-BE SP))
 	    )
 	  )
-	  ((= hexdit2 2)        ; C2 : JNZ nN
+	  ((= hexdit2 2)        ; C2 nN : JNZ LABEL
 	    (y-or-n-p "JNZ nN")
 	    (if (= (what-is-zero-flag) 0)
 	      (let (hexdit3 hexdit4 hexdit5 hexdit6) 
@@ -1215,7 +1215,7 @@
 	      )
 	    )
 	  )
-          ((= hexdit2 3)        ; C3 nN : JMP nN
+          ((= hexdit2 3)        ; C3 nN : JMP LABEL
 	    (y-or-n-p "JMP nN")
 	    (let (hexdit3 hexdit4 hexdit5 hexdit6)
 	      (setq hexdit3 (aref hexV 2))
@@ -1226,7 +1226,7 @@
 	      (setq PC (hexadecimal-to-binary-BE (vector hexdit5 hexdit6 hexdit3 hexdit4)))    ; swapped format
 	    )
 	  )
-	  ((= hexdit2 4)        ; C4 : CNZ nN
+	  ((= hexdit2 4)        ; C4 nN : CNZ LABEL
 	    (y-or-n-p "CNZ nN")
             (if (= (what-is-zero-flag) 0)
               (let (PChigh PClow address hexdit3 hexdit4 hexdit5 hexdit6 newPC)
@@ -1281,7 +1281,7 @@
 	      (setq PC (copy-vector newPC))
 	    )
 	  )
-	  ((= hexdit2 10)       ; CA nN : JZ nN
+	  ((= hexdit2 10)       ; CA nN : JZ LABEL
 	    (y-or-n-p "JZ nN")
 	    (if (= (what-is-zero-flag) 1)
 	      (let (hexdit3 hexdit4 hexdit5 hexdit6)
@@ -1295,7 +1295,7 @@
 	      (y-or-n-p "Not jumping.")
 	    )
 	  )
-	  ((= hexdit2 12)        ; CC : CZ nN
+	  ((= hexdit2 12)        ; CC nN : CZ LABEL
 	    (y-or-n-p "CZ nN")
             (if (= (what-is-zero-flag) 1)
               (let (PChigh PClow address hexdit3 hexdit4 hexdit5 hexdit6 newPC)
@@ -1316,7 +1316,7 @@
 	      )
 	    )
 	  )
-	  ((= hexdit2 13)        ; CD nN : CALL nN
+	  ((= hexdit2 13)        ; CD nN : CALL LABEL
 	    (y-or-n-p "CALL nN")
 	    (let (PChigh PClow address hexdit3 hexdit4 hexdit5 hexdit6 newPC)
 	      (setq PChigh (project-first-byte-from-double-byte PC))
@@ -1344,7 +1344,7 @@
 	      (setq PC newPC)
 	    )
 	  )
-	  ((= hexdit2 14)         ; CE : ADC n
+	  ((= hexdit2 14)         ; CE n : ACI n
 	    (y-or-n-p "ADC n")
             (let (addend accumulator hexdit3 hexdit4)
 	      (setq addend (hexadecimal-to-binary-BE (vector hexdit3 hexdit4)))
@@ -1369,7 +1369,7 @@
 	      (setq SP (increment-double-byte-BE SP))
 	    )
 	  )
-	  ((= hexdit2 2)         ; D2 : JNC nN
+	  ((= hexdit2 2)         ; D2 nN : JNC LABEL
 	    (y-or-n-p "JNC nN")
             (if (= (what-is-carry-flag) 0)
               (let (hexdit3 hexdit4 hexdit5 hexdit6) 
@@ -1381,7 +1381,7 @@
 	      )
 	    )
 	  )
-	  ((= hexdit2 4)         ; D4 : CNC nN
+	  ((= hexdit2 4)         ; D4 nN : CNC LABEL
 	    (y-or-n-p "CNC nN")
 	    (if (= (what-is-carry-flag) 0)
               (let (PChigh PClow address hexdit3 hexdit4 hexdit5 hexdit6 newPC)
@@ -1422,7 +1422,7 @@
 	      (RAM-store address E)
 	    )
 	  )
-	  ((= hexdit2 6)         ; D6 : SUI n
+	  ((= hexdit2 6)         ; D6 n : SUI n
 	    (y-or-n-p "SUI n")
 	    "A <- A - n"
 	    (let (subtrahend accumulator hexdit3 hexdit4)
@@ -1431,7 +1431,7 @@
 	      (setq A (add-bytes-BE accumulator subtrahend))
 	    )
 	  )
-	  ((= hexdit2 10)        ; DA : JC nN
+	  ((= hexdit2 10)        ; DA nN : JC LABEL
 	    (y-or-n-p "JC nN")
             (if (= (what-is-carry-flag) 1)
               (let (hexdit3 hexdit4 hexdit5 hexdit6) 
@@ -1443,7 +1443,7 @@
 	      )
 	    )
 	  )
-	  ((= hexdit2 12)         ; DC : CC nN
+	  ((= hexdit2 12)         ; DC nN : CC LABEL
 	    (y-or-n-p "CC nN")
 	    "Call subroutine at nN on C = 1."
 	    (if (= (what-is-carry-flag) 1)
@@ -1474,7 +1474,7 @@
 	      )
 	    )
 	  )
-	  ((= hexdit2 14)          ; DE : SBI n
+	  ((= hexdit2 14)          ; DE n : SBI n
             (y-or-n-p "SBI n")
 	    "A <- A - n - c"
 	    (let (subtrahend accumulator hexdit3 hexdit4 immediate)
@@ -1500,7 +1500,7 @@
 	      (setq SP (increment-double-byte-BE SP))
 	    )
 	  )
-	  ((= hexdit2 2)     ;  E2 : JNO nN
+	  ((= hexdit2 2)     ;  E2 nN : JNO LABEL
 	    (y-or-n-p "JNO nN")
 	    (if (= (what-is-overflow-flag) 0)
               (let (hexdit3 hexdit4 hexdit5 hexdit6 binV) 
@@ -1514,7 +1514,7 @@
 	      (y-or-n-p "O = 1 therefore not jumping.")
 	    )
 	  )
-	  ((= hexdit2 4)     ; E4 : CPO nN    /    CNO nN
+	  ((= hexdit2 4)     ; E4 nN : CPO LABEL    /    CNO LABEL
 	    (y-or-n-p "CPO nN")
             (if (= (what-is-parity-flag) 0)
               (let (PChigh PClow address hexdit3 hexdit4 hexdit5 hexdit6 newPC)
@@ -1565,7 +1565,7 @@
 	      (setq PC HL)
 	    )
 	  )
-	  ((= hexdit2 10)     ; EA : JO nN
+	  ((= hexdit2 10)     ; EA nN : JO LABEL
             (y-or-n-p "JO nN")
             (if (= (what-is-overflow-flag) 1)
               (let (hexdit3 hexdit4 hexdit5 hexdit6) 
@@ -1588,7 +1588,7 @@
 	      (setq E (project-second-byte-from-double-byte HL))
 	    )
 	  )
-	  ((= hexdit2 12)      ; EC nN : CPE nN   /   CO nN
+	  ((= hexdit2 12)      ; EC nN : CPE LABEL   /   CO LABEL
 	    (y-or-n-p "CPE nN")
             (if (= (what-is-parity-flag) 1)
               (let (PChigh PClow address hexdit3 hexdit4 hexdit5 hexdit6 newPC)
@@ -1636,7 +1636,7 @@
 	      (setq SP (increment-double-byte-BE SP))
 	    )
 	    )
-	  ((= hexdit2 2)    ; F2 : JP nN
+	  ((= hexdit2 2)    ; F2 nN : JP LABEL
 	    (y-or-n-p "JP nN")
             (if (= (what-is-sign-flag) 0)
               (let (hexdit3 hexdit4 hexdit5 hexdit6) 
@@ -1648,7 +1648,7 @@
 	      )
 	    )
 	  )
-	  ((= hexdit2 4)    ; F4 : CP nN
+	  ((= hexdit2 4)    ; F4 nN : CP LABEL
 	    (y-or-n-p "CP nN")
             (if (= (what-is-sign-flag) 0)
               (let (PChigh PClow address hexdit3 hexdit4 hexdit5 hexdit6 newPC)
@@ -1688,7 +1688,7 @@
 	      (y-or-n-p (concat "(SP) = " (numerical-vector-to-string (RAM-access address))))
 	    )
 	  )
-	  ((= hexdit2 6)     ; F6 : ORI n
+	  ((= hexdit2 6)     ; F6 n : ORI n
             (y-or-n-p "ORI n")
 	    (let (hexdit3 hexdit4 operand accumulator)
               (setq hexdit3 (aref hexV 2))
@@ -1705,7 +1705,7 @@
 	      (setq SP HL)
 	    )
 	  )
-	  ((= hexdit2 12)      ; FC : CM nN
+	  ((= hexdit2 12)      ; FC nN : CM LABEL
 	    (y-or-n-p "CM nN")
             (if (= (what-is-sign-flag) 1)
               (let (PChigh PClow address hexdit3 hexdit4 hexdit5 hexdit6 newPC)
