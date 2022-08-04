@@ -1,0 +1,296 @@
+(lisp-interaction-mode)
+
+* 1  2022.07.24  
+#1  13:59
+(defun decimal-to-hexadecimal (n)
+  (let (i vect len dividend quotient remainder)
+    ;(setq len (ceiling (/ (log n) (log 16))))
+    (setq len (floor (+ 1.0 (/ (log n) (log 16)))))
+    ;(y-or-n-p (concat "len = " (number-to-string len)))
+    (setq vect (make-vector len 0))
+    (setq i 0)
+    (setq dividend n)
+    (while (>= dividend 16)
+      (setq quotient (/ dividend 16))
+      (setq remainder (% dividend 16))
+      (aset vect i remainder)
+      (setq dividend quotient)
+      (setq i (+ i 1))
+    )
+    (aset vect i dividend)
+    vect
+  )
+)
+
+(decimal-to-hexadecimal 16)
+
+* 2  2022.07.24  hexadecimal to binary LE
+#2  14:19
+(defun hexadecimal-to-binary (hexV)
+  "hexV is a vector of integers, each inc-between 0 and 16. Little Endian." 
+  (let (binV lenhex i xit j0 j1 j2 j3)
+    (setq lenhex (length hexV))
+    (setq binV (make-vector (* lenhex 4) 0))
+    (setq i 0)
+    (while (< i lenhex)
+      (setq xit (aref hexV i))
+      (setq j0 (* 4 i))
+      (setq j1 (+ j0 1))
+      (setq j2 (+ j0 2))
+      (setq j3 (+ j0 3))
+      (cond
+        ((= xit 0) (progn (aset binV j0 0) (aset binV j1 0) (aset binV j2 0) (aset binV j3 0)))
+        ((= xit 1) (progn (aset binV j0 1) (aset binV j1 0) (aset binV j2 0) (aset binV j3 0)))
+	((= xit 2) (progn (aset binV j0 0) (aset binV j1 1) (aset binV j2 0) (aset binV j3 0)))
+	((= xit 3) (progn (aset binV j0 1) (aset binV j1 1) (aset binV j2 0) (aset binV j3 0)))
+	((= xit 4) (progn (aset binV j0 0) (aset binV j1 0) (aset binV j2 1) (aset binV j3 0)))
+	((= xit 5) (progn (aset binV j0 1) (aset binV j1 0) (aset binV j2 1) (aset binV j3 0)))
+	((= xit 6) (progn (aset binV j0 0) (aset binV j1 1) (aset binV j2 1) (aset binV j3 0)))
+	((= xit 7) (progn (aset binV j0 1) (aset binV j1 1) (aset binV j2 1) (aset binV j3 0)))
+	((= xit 8) (progn (aset binV j0 0) (aset binV j1 0) (aset binV j2 0) (aset binV j3 1)))
+	((= xit 9) (progn (aset binV j0 1) (aset binV j1 0) (aset binV j2 0) (aset binV j3 1)))
+	((= xit 10) (progn (aset binV j0 0) (aset binV j1 1) (aset binV j2 0) (aset binV j3 1)))
+	((= xit 11) (progn (aset binV j0 1) (aset binV j1 1) (aset binV j2 0) (aset binV j3 1)))
+	((= xit 12) (progn (aset binV j0 0) (aset binV j1 0) (aset binV j2 1) (aset binV j3 1)))
+	((= xit 13) (progn (aset binV j0 1) (aset binV j1 0) (aset binV j2 1) (aset binV j3 1)))
+	((= xit 14) (progn (aset binV j0 0) (aset binV j1 1) (aset binV j2 1) (aset binV j3 1)))
+	((= xit 15) (progn (aset binV j0 1) (aset binV j1 1) (aset binV j2 1) (aset binV j3 1)))
+      )
+      (setq i (+ i 1))
+    )
+    binV
+  )
+  )
+
+(defun hexadecimal-to-binary-LE (hexV)
+  (hexadecimal-to-binary hexV)
+)
+
+(hexadecimal-to-binary-LE [4 6])
+
+
+* 2.0  2022.07.25  hexadecimal to binary BE
+#2.0  14:12
+(defun hexadecimal-to-binary-BE (hexV)
+  "hexV is a vector of integers, each inc-between 0 and 16." 
+  (let (binV lenhex i xit j0 j1 j2 j3)
+    (setq lenhex (length hexV))
+    (setq binV (make-vector (* lenhex 4) 0))
+    (setq i 0)
+    (while (< i lenhex)
+      (setq xit (aref hexV i))
+      (setq j3 (* 4 i))
+      (setq j2 (+ j3 1))
+      (setq j1 (+ j3 2))
+      (setq j0 (+ j3 3))
+      (cond
+        ((= xit 0) (progn (aset binV j0 0) (aset binV j1 0) (aset binV j2 0) (aset binV j3 0)))
+        ((= xit 1) (progn (aset binV j0 1) (aset binV j1 0) (aset binV j2 0) (aset binV j3 0)))
+	((= xit 2) (progn (aset binV j0 0) (aset binV j1 1) (aset binV j2 0) (aset binV j3 0)))
+	((= xit 3) (progn (aset binV j0 1) (aset binV j1 1) (aset binV j2 0) (aset binV j3 0)))
+	((= xit 4) (progn (aset binV j0 0) (aset binV j1 0) (aset binV j2 1) (aset binV j3 0)))
+	((= xit 5) (progn (aset binV j0 1) (aset binV j1 0) (aset binV j2 1) (aset binV j3 0)))
+	((= xit 6) (progn (aset binV j0 0) (aset binV j1 1) (aset binV j2 1) (aset binV j3 0)))
+	((= xit 7) (progn (aset binV j0 1) (aset binV j1 1) (aset binV j2 1) (aset binV j3 0)))
+	((= xit 8) (progn (aset binV j0 0) (aset binV j1 0) (aset binV j2 0) (aset binV j3 1)))
+	((= xit 9) (progn (aset binV j0 1) (aset binV j1 0) (aset binV j2 0) (aset binV j3 1)))
+	((= xit 10) (progn (aset binV j0 0) (aset binV j1 1) (aset binV j2 0) (aset binV j3 1)))
+	((= xit 11) (progn (aset binV j0 1) (aset binV j1 1) (aset binV j2 0) (aset binV j3 1)))
+	((= xit 12) (progn (aset binV j0 0) (aset binV j1 0) (aset binV j2 1) (aset binV j3 1)))
+	((= xit 13) (progn (aset binV j0 1) (aset binV j1 0) (aset binV j2 1) (aset binV j3 1)))
+	((= xit 14) (progn (aset binV j0 0) (aset binV j1 1) (aset binV j2 1) (aset binV j3 1)))
+	((= xit 15) (progn (aset binV j0 1) (aset binV j1 1) (aset binV j2 1) (aset binV j3 1)))
+      )
+      (setq i (+ i 1))
+    )
+    binV
+  )
+)
+
+(hexadecimal-to-binary-BE [10 8])
+
+
+* 2.1  2022.07.25  binary to hexadecimal LE
+#2.1  00:59
+(defun binary-to-hexadecimal (binV)
+  "Little Endian"
+  (let (len)
+    (setq len (length binV))
+    (if (= (% len 4) 0)
+      (let (len2 hexV i j0 j1 j2 j3 bit0 bit1 bit2 bit3 hexdit)
+        (setq len2 (/ len 4))
+	(setq hexV (make-vector len2 0))
+	(setq i 0)
+	(while (< i len2)
+          (setq j0 (* 4 i))
+	  (setq j1 (+ 1 j0))
+	  (setq j2 (+ 2 j0))
+	  (setq j3 (+ 3 j0))
+	  (setq bit0 (aref binV j0))
+	  (setq bit1 (aref binV j1))
+	  (setq bit2 (aref binV j2))
+	  (setq bit3 (aref binV j3))
+	  (setq hexdit (+ (* 8 bit3) (* 4 bit2) (* 2 bit1) bit0))
+	  (aset hexV i hexdit)
+	  (setq i (+ i 1))
+	)
+	hexV
+      )	
+      (y-or-n-p "ERROR: The binary number must have a multiple-of-four quantity of bits.")
+    )
+  )
+)
+
+(defun binary-to-hexadecimal-LE (binV)
+  (binary-to-hexadecimal binV)
+)
+
+* 2.2  2022.07.25  binary to hexadecimal (Big Endian)
+#2.2  10:07  
+(defun binary-to-hexadecimal-BE (binV)
+  (reverse-vector (binary-to-hexadecimal-LE (reverse-vector binV)))
+)
+
+(binary-to-hexadecimal-BE [1 1 1 1 0 1 0 0]) = [15 4]
+(present-hexadecimal-BE [15 4])
+
+* 3  2022.07.24  present hexadecimal LE
+#3  14:47
+(defun present-hexadecimal (hexV)
+  "Little Endian input vector: hexV."
+  (let (i hexS hexdit hexditS)
+    (setq i (- (length hexV) 1))
+    ;(y-or-n-p (concat "i = " (number-to-string i)))
+    (setq hexS "")
+    (while (>= i 0)
+      (setq hexdit (aref hexV i))
+      (cond
+        ((< hexdit 10) (setq hexditS (number-to-string hexdit)))
+        ((= hexdit 10) (setq hexditS "A"))
+	((= hexdit 11) (setq hexditS "B"))
+	((= hexdit 12) (setq hexditS "C"))
+	((= hexdit 13) (setq hexditS "D"))
+	((= hexdit 14) (setq hexditS "E"))
+	((= hexdit 15) (setq hexditS "F"))
+      )
+      (setq hexS (concat hexS hexditS))
+      (setq i (- i 1))
+    )
+    hexS
+  )
+)
+
+(defun present-hexadecimal-LE (hexV)
+  (present-hexadecimal hexV)
+)
+
+(present-hexadecimal-LE [4 6])
+
+* 3.1  2022.07.25  present hexadecimal (Big Endian)
+#3.1  11:44
+(defun present-hexadecimal-BE (hexV)
+  (present-hexadecimal-LE (reverse-vector hexV))
+)
+
+(present-hexadecimal-BE [6 4])
+(present-hexadecimal-BE [3 4 15 3]) = "34F3"
+
+* 4  2022.07.25  hexadecimal digit to binary (Big Endian)
+#4  02:16
+(defun hex-digit-to-binary-BE (hexdit)
+  "Convert hexadecimal digit (given as integer from 0 to 15) to Big Endian binary nibble."
+  (cond
+    ((= hexdit 0) [0 0 0 0])
+    ((= hexdit 1) [0 0 0 1])
+    ((= hexdit 2) [0 0 1 0])
+    ((= hexdit 3) [0 0 1 1])
+    ((= hexdit 4) [0 1 0 0])
+    ((= hexdit 5) [0 1 0 1])
+    ((= hexdit 6) [0 1 1 0])
+    ((= hexdit 7) [0 1 1 1])
+    ((= hexdit 8) [1 0 0 0])
+    ((= hexdit 9) [1 0 0 1])
+    ((= hexdit 10) [1 0 1 0])
+    ((= hexdit 11) [1 0 1 1])
+    ((= hexdit 12) [1 1 0 0])
+    ((= hexdit 13) [1 1 0 1])
+    ((= hexdit 14) [1 1 1 0])
+    ((= hexdit 15) [1 1 1 1])
+  )
+)
+
+
+* 5  2022.07.25  one or two hex digits
+#5  10:01
+(defun present-hex-digit (n)
+  (if (< n 10)
+    (number-to-string n)
+    (aref ["A" "B" "C" "D" "E" "F"] (- n 10))
+  )
+)
+
+(present-hex-digit 8)
+(present-hex-digit 11)
+
+(defun present-hex-byte-BE (n1 n2)
+  "Big Endian"
+  (concat (present-hex-digit n1) (present-hex-digit n2))
+)
+
+
+* 6  2022.07.25  add double bytes hexadecimal BE
+#6  12:36
+(defun add-double-bytes-hexadecimal-BE (hexV1 hexV2)
+  "hexV1 and hexV2 should both be arrays of size four whose elements are integers inc-between 0 and 15"
+  (let (hex10 hex11 hex12 hex13 hex20 hex21 hex22 hex23 hex30 hex31 hex32 hex33 icarry)
+    (setq hex13 (aref hexV1 0))
+    (setq hex12 (aref hexV1 1))
+    (setq hex11 (aref hexV1 2))
+    (setq hex10 (aref hexV1 3))
+    ;(y-or-n-p (concat "hex10 = " (number-to-string hex10)))
+    (setq hex23 (aref hexV2 0))
+    (setq hex22 (aref hexV2 1))
+    (setq hex21 (aref hexV2 2))
+    (setq hex20 (aref hexV2 3))
+    ;(y-or-n-p (concat "hex20 = " (number-to-string hex20)))
+    (setq hex30 (+ hex10 hex20))
+    ;(y-or-n-p (concat "hex30 = " (number-to-string hex30)))
+    (setq icarry 0)
+    (if (>= hex30 16)
+      (progn
+        (setq hex30 (- hex30 16))	  
+        (setq icarry 1)
+      )
+    )
+    (setq hex31 (+ hex11 hex21 icarry))
+    ;(y-or-n-p (concat "hex31 = " (number-to-string hex31)))
+    (if (>= hex31 16)
+      (progn
+        (setq hex31 (- hex31 16))
+	(setq icarry 1)
+      )
+      (setq icarry 0)
+    )
+    (setq hex32 (+ hex12 hex22 icarry))
+    ;(y-or-n-p (concat "hex32 = " (number-to-string hex32)))
+    (if (>= hex32 16)
+      (progn
+        (setq hex32 (- hex32 16))
+	(setq icarry 1)
+      )
+      (setq icarry 0)
+    )
+    (setq hex33 (+ hex13 hex23 icarry))
+    (if (>= hex33 16)
+      (progn
+        (setq hex33 (- hex33 16))
+	;(setq carry 1)
+	(set-carry-flag)
+      )
+      (reset-carry-flag)
+    )
+    (vector hex33 hex32 hex31 hex30)
+  )
+)
+
+(add-double-bytes-hexadecimal-BE [0 2 4 3] [10 4 8 14])

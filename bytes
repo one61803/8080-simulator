@@ -1,0 +1,752 @@
+
+
+* 1  2022.07.24  decimal integer to signed byte
+#1  18:27
+(defun decimal-to-signed-byte (n)
+  (if (and (>= n -128) (<= n 127))
+    (let (binV quotient remainder i binnumlen)   ;THEN
+      (setq binnumlen 8)
+      (setq binV (make-vector binnumlen 0))
+      (if (< n 0)
+	(progn
+          (aset binV 7 1)
+	  (setq n (+ n 128))
+        )
+      )
+      (setq quotient n)
+      (setq i 0)
+      (while (> quotient 0)
+        (setq remainder (% quotient 2))
+        (setq quotient (/ quotient 2))
+        (aset binV i remainder)
+        (setq i (+ i 1))
+      )
+      binV
+    )
+    (y-or-n-p "ERROR: Out of range of a signed byte.")    ;ELSE
+  )
+)
+
+
+* 2  2022.07.24  add bytes LE
+#2  18:29
+(defun add-bytes (byte1 byte2)
+  "byte1 and byte2 are vectors of bits, LSB first."
+  (let (byte3 i carrybit bit1 bit2 bitsum bit3 top1 top2)
+    (setq i 0)
+    (setq carrybit 0)
+    (setq byte3 (make-vector 8 0))
+    (setq top1 (aref byte1 7))
+    (setq top2 (aref byte2 7))
+    (while (< i 8)
+      (setq bit1 (aref byte1 i))
+      (setq bit2 (aref byte2 i))
+      (setq bitsum (+ bit1 bit2 carrybit))
+      (setq bit3 (% bitsum 2))
+      (if (>= bitsum 2)
+	(setq carrybit 1)
+	(setq carrybit 0)
+      )
+      (aset byte3 i bit3)
+      (setq i (+ i 1))
+    )
+    ;(setq carry carrybit)        ; carry flag
+    (assign-to-carry-flag carrybit)
+    (if (= top1 top2)
+      (let (top3)
+	(setq top3 (aref byte3 7))
+        (if (= top1 top3)
+	  (reset-overflow-flag)
+	  (set-overflow-flag)
+	)
+      )
+      (reset-overflow-flag)
+    )
+    ;(setq sign (aref byte3 7))     ; sign flag
+    (assign-to-sign-flag (aref byte3 7))
+    ;(setq zero (is-byte-zero byte3))     ; zero flag
+    (assign-to-zero-flag (is-byte-zero byte3))
+    byte3
+  )
+)
+
+(defun add-bytes-LE (byteV1 byteV2)
+  (add-bytes byteV1 byteV2)
+)
+
+
+* 2.0  2022.07.26  quietly add bytes
+#2.0  01:31  
+(defun quietly-add-bytes (byte1 byte2)
+  "byte1 and byte2 are vectors of bits, LSB first."
+  (let (byte3 i carrybit bit1 bit2 bitsum bit3 top1 top2)
+    (setq i 0)
+    (setq carrybit 0)
+    (setq byte3 (make-vector 8 0))
+    (setq top1 (aref byte1 7))
+    (setq top2 (aref byte2 7))
+    (while (< i 8)
+      (setq bit1 (aref byte1 i))
+      (setq bit2 (aref byte2 i))
+      (setq bitsum (+ bit1 bit2 carrybit))
+      (setq bit3 (% bitsum 2))
+      (if (>= bitsum 2)
+	(setq carrybit 1)
+	(setq carrybit 0)
+      )
+      (aset byte3 i bit3)
+      (setq i (+ i 1))
+    )
+    (setq quiet-carry carrybit)
+    (if (= top1 top2)
+      (let (top3)
+	(setq top3 (aref byte3 7))
+        (if (= top1 top3)
+	  (setq quiet-overflow 0)
+	  (setq quiet-overflow 1)
+	)
+      )
+      (setq quiet-overflow 0)
+    )
+    byte3
+  )
+)
+
+(defun quietly-add-bytes-LE (byte1 byte2)
+  (quietly-add-bytes byte1 byte2)
+)
+
+
+* 2.1  2022.07.25  add bytes BE
+#2.1  19:23  
+(defun add-bytes-BE (byteV1 byteV2)
+  (let (revbyteV1 revbyteV2 revbyteV3)
+    (setq revbyteV1 (reverse-vector byteV1))
+    (setq revbyteV2 (reverse-vector byteV2))
+    (setq revbyteV3 (add-bytes-LE revbyteV1 revbyteV2))
+    (reverse-vector revbyteV3)
+  )
+)
+
+
+* 2.1.1  2022.07.26  quietly add bytes BE
+#2.1.1  01:29  
+(defun quietly-add-bytes-BE (byteV1 byteV2)
+  (let (revbyteV1 revbyteV2 revbyteV3)
+    (setq revbyteV1 (reverse-vector byteV1))
+    (setq revbyteV2 (reverse-vector byteV2))
+    (setq revbyteV3 (quietly-add-bytes-LE revbyteV1 revbyteV2))
+    (reverse-vector revbyteV3)
+  )
+)
+
+
+* 2.1.2  2022.07.26  increment byte BE
+#2.1.2  03:53  
+(defun increment-byte-BE (byteV1)
+  "Flags: Z V S"
+  (let (revbyteV1 revbyteV2 revbyteV3 byteV2 sign1 sign2 byteV3)
+    (setq byteV2 [0 0 0 0 0 0 0 1])
+    (setq sign1 (aref byteV1 0))
+    (setq sign2 (aref byteV2 0))
+    (setq revbyteV1 (reverse-vector byteV1))
+    (setq revbyteV2 (reverse-vector byteV2))
+    (setq revbyteV3 (quietly-add-bytes-LE revbyteV1 revbyteV2))
+    ;(setq zero (is-byte-zero revbyteV3))
+    (assign-to-zero-flag (is-byte-zero revbyteV3))
+    (setq byteV3 (reverse-vector revbyteV3))
+    ;(setq sign (aref byteV3 0))
+    (assign-to-sign-flag (aref byteV3 0))
+    (if (or (not (= sign1 sign2)) (= sign sign2))
+      (reset-overflow-flag)
+      (set-overflow-flag)
+    )
+    byteV3
+  )
+)
+
+(defun twos-complement-BE (byteV)
+  (setq byteV (ones-complement byteV))
+  (setq byteV (increment-byte-BE byteV))
+  byteV
+)
+
+(twos-complement-BE [0 0 1 1 0 1 0 1]) = CB = 11001011 = -53
+
+(defun subtract-bytes-BE (byte1V byte2V)
+  (let (byte2pV byte3V)
+    (setq byte2pV (twos-complement-BE byte2V))
+    (setq byte3V (add-bytes-BE byte1V byte2pV))
+    ;(setq carry (- 1 carry))       ; carry becomes borrow
+    (if (= (is-byte-zero byte2V) 0)
+      (toggle-carry-flag)
+    )
+    byte3V
+  )
+)
+
+
+* 2.1.2.1  2022.07.31  subtract bytes with carry BE
+#2.1.2.1  01:13
+(defun subtract-bytes-with-carry-BE (byte1 byte2)
+  (let (byte3 input-carry inter-carry inter-overflow)
+    (setq input-carry (what-is-carry-flag))
+    (setq byte3 (subtract-bytes-BE byte1 byte2))
+    (setq inter-carry (what-is-carry-flag))
+    (setq inter-overflow (what-is-overflow-flag))
+    (if (= input-carry 1)
+      (progn
+        (setq byte3 (quietly-add-bytes-BE byte3 [1 1 1 1 1 1 1 1]))
+	(assign-to-carry-flag (or inter-carry (what-is-carry-flag)))
+	(assign-to-overflow-flag (or inter-overflow (what-is-overflow-flag)))
+      )
+    )
+    byte3
+  )
+)
+
+
+* 2.1.3  2022.07.27  decrement byte BE
+#2.1.3  01:22  
+(defun decrement-byte-BE (byteV1)
+  "byteV1 should be a vector of 8 bits in Big Endian order."
+  (let (revbyteV1 revbyteV2 revbyteV3 byteV2 sign1 sign2 byteV3)
+    (setq byteV2 [1 1 1 1 1 1 1 1])
+    (setq sign1 (aref byteV1 0))
+    (setq sign2 (aref byteV2 0))
+    (setq revbyteV1 (reverse-vector byteV1))
+    (setq revbyteV2 (reverse-vector byteV2))
+    (setq revbyteV3 (quietly-add-bytes-LE revbyteV1 revbyteV2))
+    ;(setq zero (is-byte-zero revbyteV3))
+    (assign-to-zero-flag (is-byte-zero revbyteV3))
+    (setq byteV3 (reverse-vector revbyteV3))
+    ;(setq sign (aref byteV3 0))
+    (assign-to-sign-flag (aref byteV3 0))
+    (if (or (not (= sign1 sign2)) (= sign sign2))
+      (reset-overflow-flag)
+      (set-overflow-flag)
+    )
+    byteV3
+  )
+)
+
+
+* 2.2  2022.07.25  add double bytes BE
+#2.2  20:39
+(defun add-double-bytes-BE (doubyte1 doubyte2)
+  "Dbyte1 and Dbyte2 are both bit-vectors of length 16. Only the carry flag is affected."
+  (let (byte1H byte1L byte2H byte2L i byte3H byte3L intercarry outcarry1 outcarry2 outcarry)
+    (setq byte1H (make-vector 8 0))
+    (setq byte1L (make-vector 8 0))
+    (setq byte2H (make-vector 8 0))
+    (setq byte2L (make-vector 8 0))
+    (setq i 0)
+    (while (< i 8)
+      (aset byte1H i (aref doubyte1 i))
+      (aset byte1L i (aref doubyte1 (+ 8 i)))
+      (aset byte2H i (aref doubyte2 i))
+      (aset byte2L i (aref doubyte2 (+ 8 i)))
+      (setq i (1+ i))
+    )
+    ;(y-or-n-p (concat "byte1H = " (numerical-vector-to-string byte1H)))
+    ;(y-or-n-p (concat "byte1L = " (numerical-vector-to-string byte1L)))
+    ;(y-or-n-p (concat "byte2H = " (numerical-vector-to-string byte2H)))
+    ;(y-or-n-p (concat "byte2L = " (numerical-vector-to-string byte2L)))
+    (setq byte3L (add-bytes-BE byte1L byte2L))
+    ;(y-or-n-p (concat "byte3L = " (numerical-vector-to-string byte3L)))
+    ;(if (= carry 1) (setq intercarry 1) (setq intercarry 0))
+    (if (= (what-is-carry-flag) 1) (setq intercarry 1) (setq intercarry 0))
+    ;(y-or-n-p (concat "intercarry = " (number-to-string intercarry)))
+    (setq byte3H (add-bytes-BE byte1H byte2H))
+    ;(y-or-n-p (concat "byte3H = " (numerical-vector-to-string byte3H)))		      
+    "If there is an overflow from this last addition then there is an overflow from this whole function."
+    ;(setq outcarry1 carry)
+    (setq outcarry1 (what-is-carry-flag))
+    ;(y-or-n-p (concat "outcarry1 = " (number-to-string carry)))
+    (if (= intercarry 1)
+      (progn
+        (setq byte3H (add-bytes-BE byte3H [0 0 0 0 0 0 0 1]))
+	;(setq outcarry2 carry)
+	(setq outcarry2 (what-is-carry-flag))
+      )
+      (setq outcarry2 0)
+    )
+    (setq outcarry (min (+ outcarry1 outcarry2) 1))
+    ;(setq carry outcarry)
+    (assign-to-carry-flag outcarry)
+    (concatenate-vectors byte3H byte3L)
+  )
+)
+
+
+* 2.2.1  2022.07.28  quietly add double bytes BE
+#2.2.1  09:12  
+(defun quietly-add-double-bytes-BE (doubyte1 doubyte2)
+  "Dbyte1 and Dbyte2 are both bit-vectors of length 16."
+  (let (byte1H byte1L byte2H byte2L i byte3H byte3L intercarry outcarry1 outcarry2 outcarry)
+    (setq byte1H (make-vector 8 0))
+    (setq byte1L (make-vector 8 0))
+    (setq byte2H (make-vector 8 0))
+    (setq byte2L (make-vector 8 0))
+    (setq i 0)
+    (while (< i 8)
+      (aset byte1H i (aref doubyte1 i))
+      (aset byte1L i (aref doubyte1 (+ 8 i)))
+      (aset byte2H i (aref doubyte2 i))
+      (aset byte2L i (aref doubyte2 (+ 8 i)))
+      (setq i (1+ i))
+    )
+    ;(y-or-n-p (concat "byte1H = " (numerical-vector-to-string byte1H)))
+    ;(y-or-n-p (concat "byte1L = " (numerical-vector-to-string byte1L)))
+    ;(y-or-n-p (concat "byte2H = " (numerical-vector-to-string byte2H)))
+    ;(y-or-n-p (concat "byte2L = " (numerical-vector-to-string byte2L)))
+    (setq byte3L (quietly-add-bytes-BE byte1L byte2L))
+    ;(y-or-n-p (concat "byte3L = " (numerical-vector-to-string byte3L)))
+    ;(if (= carry 1) (setq intercarry 1) (setq intercarry 0))
+    (if (= quiet-carry 1) (setq intercarry 1) (setq intercarry 0)) 
+    ;(y-or-n-p (concat "intercarry = " (number-to-string intercarry)))
+    (setq byte3H (quietly-add-bytes-BE byte1H byte2H))
+    ;(y-or-n-p (concat "byte3H = " (numerical-vector-to-string byte3H)))		      
+    "If there is an overflow from this last addition then there is an overflow from this whole function."
+    ;(setq outcarry1 carry)
+    (setq outcarry1 quiet-carry)
+    ;(y-or-n-p (concat "outcarry1 = " (number-to-string carry)))
+    (if (= intercarry 1)
+      (progn
+        (setq byte3H (quietly-add-bytes-BE byte3H [0 0 0 0 0 0 0 1]))
+	;(setq outcarry2 carry)
+	(setq outcarry2 quiet-carry)
+      )
+      (setq outcarry2 0)
+    )
+    (setq outcarry (min (+ outcarry1 outcarry2) 1))
+    (setq quiet-carry outcarry)
+    (concatenate-vectors byte3H byte3L)
+  )
+)
+
+
+
+
+* 2.3  2022.07.26  increment double byte BE
+#2.3  01:26
+(defun increment-double-byte-BE (doubyte1)     ; deprecated?
+  "Dbyte1 and Dbyte2 are both bit-vectors of length 16. No flags are modified."
+  (let (doubyte2 byte1H byte1L byte2H byte2L i byte3H byte3L intercarry)
+    (setq doubyte2 [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1])
+    (setq byte1H (make-vector 8 0))
+    (setq byte1L (make-vector 8 0))
+    (setq byte2H (make-vector 8 0))
+    (setq byte2L (make-vector 8 0))
+    (setq i 0)
+    (while (< i 8)
+      (aset byte1H i (aref doubyte1 i))
+      (aset byte1L i (aref doubyte1 (+ 8 i)))
+      (aset byte2H i (aref doubyte2 i))
+      (aset byte2L i (aref doubyte2 (+ 8 i)))
+      (setq i (1+ i))
+    )
+    ;(y-or-n-p (concat "byte1H = " (numerical-vector-to-string byte1H)))
+    ;(y-or-n-p (concat "byte1L = " (numerical-vector-to-string byte1L)))
+    ;(y-or-n-p (concat "byte2H = " (numerical-vector-to-string byte2H)))
+    ;(y-or-n-p (concat "byte2L = " (numerical-vector-to-string byte2L)))
+    (setq byte3L (quietly-add-bytes-BE byte1L byte2L))
+    ;(y-or-n-p (concat "byte3L = " (numerical-vector-to-string byte3L)))
+    (if (= quiet-carry 1) (setq intercarry 1) (setq intercarry 0))
+    ;(y-or-n-p (concat "intercarry = " (number-to-string intercarry)))
+    (setq byte3H (quietly-add-bytes-BE byte1H byte2H))
+    ;(y-or-n-p (concat "byte3H = " (numerical-vector-to-string byte3H)))		      
+    "If there is an overflow from this last addition then there is an overflow from this whole function."
+    ;(setq outcarry1 carry)
+    ;(y-or-n-p (concat "outcarry1 = " (number-to-string carry)))
+    (if (= intercarry 1)
+      (progn
+        (setq byte3H (quietly-add-bytes-BE byte3H [0 0 0 0 0 0 0 1]))
+	;(setq outcarry2 carry)
+      )
+      ;(setq outcarry2 0)
+    )
+    ;(setq outcarry (min (+ outcarry1 outcarry2) 1))
+    ;(setq carry outcarry)
+    (concatenate-vectors byte3H byte3L)
+  )
+)            ; deprecated?
+
+
+* 2.3.1  2022.07.28  increment double byte BE
+#2.3.1  09:19  
+(defun increment-double-byte-BE (doubyte1)
+  (let (doubyte2 doubyte3)
+    (setq doubyte2 [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1])
+    (setq doubyte3 (quietly-add-double-bytes-BE doubyte1 doubyte2))
+    doubyte3
+  )
+)
+
+(defun decrement-double-byte-BE (doubyte1)
+  (let (doubyte2 doubyte3)
+    (setq doubyte2 [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1])
+    (setq doubyte3 (quietly-add-double-bytes-BE doubyte1 doubyte2))
+    doubyte3
+  )
+)
+
+* 3  2022.07.24  AND, OR, & XOR bytes
+#3  19:38
+(defun AND-bytes (byte1 byte2)         ; deprecated; see the newer one below
+  (let (byte3 i bit1 bit2 bitAND bitsum)
+    (setq i 0)
+    (setq byte3 (make-vector 8 0))
+    (setq bitsum 0)
+    (while (< i 8)
+      (setq bit1 (aref byte1 i))
+      (setq bit2 (aref byte2 i))
+      (setq bitAND (* bit1 bit2))
+      (aset byte3 i bitAND)
+      (setq bitsum (+ bitsum bitAND))
+      (setq i (+ i 1))
+    )
+    (setq parity (% (+ bitsum 1) 2))
+    (setq zero (is-byte-zero byte3))
+    byte3
+  )
+)      ; deprecated; see the newer one below
+
+(defun OR-bytes (byte1 byte2)       ; deprecated; see the newer one below
+  (let (byte3 i bit1 bit2 bitOR bitsum)
+    (setq i 0)
+    (setq byte3 (make-vector 8 0))
+    (setq bitsum 0)
+    (while (< i 8)
+      (setq bit1 (aref byte1 i))
+      (setq bit2 (aref byte2 i))
+      (setq bitOR (+ bit1 bit2 (- (* bit1 bit2))))
+      (aset byte3 i bitOR)
+      (setq bitsum (+ bitsum bitOR))
+      (setq i (+ i 1))
+    )
+    (setq parity (% (+ bitsum 1) 2))
+    byte3
+  )
+)       ; deprecated; see the newer one below
+
+(defun XOR-bytes (byte1 byte2)      ; deprecated; see the newer one below
+  (let (byte3 i bit1 bit2 bitXOR bitsum)
+    (setq i 0)
+    (setq byte3 (make-vector 8 0))
+    (setq bitsum 0)
+    (while (< i 8)
+      (setq bit1 (aref byte1 i))
+      (setq bit2 (aref byte2 i))
+      (setq bitXOR (% (+ bit1 bit2) 2))
+      (aset byte3 i bitXOR)
+      (setq bitsum (+ bitsum bitXOR))
+      (setq i (+ i 1))
+    )
+    (setq parity (% (+ bitsum 1) 2))
+    byte3
+  )
+)     ; deprecated; see the newer one below
+
+
+* 3.1  2022.07.27  AND, OR, XOR with parity count factored out
+#3.1  22:51  
+(defun what-is-bytes-parity (byte)
+  (let (i bitsum bit)
+    (setq i 0)
+    (setq bitsum 0)
+    (while (< i 8)
+      (setq bit (aref byte i))
+      (setq bitsum (+ bitsum bit))
+      (setq i (1+ i))
+    )
+    (% (+ bitsum 1) 2)
+  )
+)
+
+(defun AND-bytes (byte1 byte2)
+  (let (byte3 i bit1 bit2 bitAND)
+    (setq i 0)
+    (setq byte3 (make-vector 8 0))
+    (while (< i 8)
+      (setq bit1 (aref byte1 i))
+      (setq bit2 (aref byte2 i))
+      (setq bitAND (* bit1 bit2))
+      (aset byte3 i bitAND)
+      (setq i (1+ i))
+    )
+    (assign-to-parity-flag (what-is-bytes-parity byte3))
+    (assign-to-zero-flag (is-byte-zero byte3))
+    (reset-carry-flag)
+    (assign-to-sign-flag (aref byte3 0))
+    byte3
+  )
+)
+
+(defun OR-bytes (byte1 byte2)
+  (let (byte3 i bit1 bit2 bitOR)
+    (setq i 0)
+    (setq byte3 (make-vector 8 0))
+    (while (< i 8)
+      (setq bit1 (aref byte1 i))
+      (setq bit2 (aref byte2 i))
+      (setq bitOR (+ bit1 bit2 (- (* bit1 bit2))))
+      (aset byte3 i bitOR)
+      (setq i (1+ i))
+    )
+    (assign-to-parity-flag (what-is-bytes-parity byte3))
+    (assign-to-zero-flag (is-byte-zero byte3))
+    (reset-carry-flag)
+    (assign-to-sign-flag (aref byte3 0))
+    byte3
+  )
+)
+
+(defun XOR-bytes (byte1 byte2)
+  (let (byte3 i bit1 bit2 bitXOR)
+    (setq i 0)
+    (setq byte3 (make-vector 8 0))
+    (while (< i 8)
+      (setq bit1 (aref byte1 i))
+      (setq bit2 (aref byte2 i))
+      (setq bitXOR (% (+ bit1 bit2) 2))
+      (aset byte3 i bitXOR)
+      (setq i (1+ i))
+    )
+    (assign-to-parity-flag (what-is-bytes-parity byte3))
+    (assign-to-zero-flag (is-byte-zero byte3))
+    (reset-carry-flag)
+    (assign-to-sign-flag (aref byte3 0))
+    byte3
+  )
+)
+
+* 4  2022.07.26  projections of single bytes from double byte
+#4  02:09
+(defun project-first-byte-from-double-byte (doubyte)
+  (let (byte i)
+    (setq byte (make-vector 8 0))
+    (setq i 0)
+    (while (< i 8)
+      (aset byte i (aref doubyte i))
+      (setq i (1+ i))
+    )
+    byte
+  )
+)
+
+(defun project-second-byte-from-double-byte (doubyte)
+  (let (byte i)
+    (setq byte (make-vector 8 0))
+    (setq i 0)
+    (while (< i 8)
+      (aset byte i (aref doubyte (+ i 8)))
+      (setq i (1+ i))
+    )
+    byte
+  )
+)
+
+
+* 5  2022.07.26  is byte zero
+#5  02:19 
+(defun is-byte-zero (byteV)
+  (let (sum i)
+    (setq sum 0)
+    (setq i 0)
+    (while (< i 8)
+      (setq sum (+ sum (aref byteV i)))
+      (setq i (1+ i))
+    )
+    (if (= sum 0)
+      1
+      0
+    )
+  )
+)
+
+(is-byte-zero [0 0 0 0 0 1 0 0])
+
+
+* 6  2022.07.26  add bytes with carry BE
+#6  03:11
+(defun add-bytes-with-carry-BE (byte1 byte2)
+  (let (byte3 input-carry inter-carry inter-overflow)
+    ;(setq input-carry carry)
+    (setq input-carry (what-is-carry-flag))
+    (setq byte3 (add-bytes-BE byte1 byte2))
+    ;(setq inter-carry carry)
+    (setq inter-carry (what-is-carry-flag))
+    ;(setq inter-overflow overflow)
+    (setq inter-overflow (what-is-overflow-flag))
+    (if (= input-carry 1)
+      (progn
+        (setq byte3 (quietly-add-bytes-BE byte3 [0 0 0 0 0 0 0 1]))
+	;(setq carry (or inter-carry carry))
+	(assign-to-carry-flag (or inter-carry (what-is-carry-flag)))
+	;(setq overflow (or inter-overflow overflow))
+	(assign-to-overflow-flag (or inter-overflow (what-is-overflow-flag)))
+      )
+    )
+    byte3
+  )
+)
+
+
+* 7  2022.07.29  random bytes and double bytes
+#7  14:38
+(defun random-byte ()
+  (let (newbyte i)
+    (setq newbyte (make-vector 8 0))
+    (setq i 0)
+    (while (< i 8)
+      (aset newbyte i (random 2))
+      (setq i (1+ i))
+    )
+    newbyte
+  )
+)
+
+(random-byte)
+
+(defun random-double-byte ()
+  (let (newdoubyte i)
+    (setq newdoubyte (make-vector 16 0))
+    (setq i 0)
+    (while (< i 16)
+      (aset newdoubyte i (random 2))
+      (setq i (1+ i))
+    )
+    newdoubyte
+  )
+)
+
+(numerical-vector-to-string (random-double-byte))
+
+
+* 8  2022.07.30  report flags
+#8  08:29
+(defun report-flags ()
+  (concat "\nS = " (number-to-string (what-is-sign-flag)) ", Z = " (number-to-string (what-is-zero-flag)) ", P = " (number-to-string (what-is-parity-flag)) ", C = " (number-to-string (what-is-carry-flag)))
+)
+
+(defun print-flags ()
+  (insert (report-flags))
+)
+
+
+* 9  2022.08.01  Rotate and Shift Instructions
+#9  23:50
+(defun rotate-left-circular-BE ()
+  (assign-to-carry-flag (aref A 0))
+  ;(aset A 0 (aref A 1))
+  (let (i)
+    (setq i 0)
+    (while (< i 7)
+      (aset A i (aref A (1+ i)))
+      (setq i (1+ i))
+    )
+    (aset A 7 (what-is-carry-flag))
+  )
+)
+
+(defun rotate-right-circular-BE ()
+  (assign-to-carry-flag (aref A 7))
+  (let (i)
+    (setq i 7)
+    (while (> i 0)
+      (aset A i (aref A (1- i)))
+      (setq i (1- i))
+    )
+    (aset A 0 (what-is-carry-flag))
+  )
+)
+
+(defun rotate-left-BE ()
+  (let (temporary-carry i)
+    (setq temporary-carry (aref A 0))
+    (setq i 0)
+    (while (< i 7)
+      (aset A i (aref A (1+ i)))
+      (setq i (1+ i))
+    )
+    (aset A 7 (what-is-carry-flag))
+    (assign-to-carry-flag temporary-carry)
+  )
+)
+
+(defun rotate-right-BE ()
+  (let (temporary-carry i)
+    (setq temporary-carry (aref A 7))
+    (setq i 7)
+    (while (> i 0)
+      (aset A i (aref A (1- i)))
+      (setq i (1- i))
+    )
+    (aset A 0 (what-is-carry-flag))
+    (assign-to-carry-flag temporary-carry)
+  )
+)
+
+
+* Sandbox
+(lisp-interaction-mode)
+
+(insert (numerical-vector-to-string (add-double-bytes-BE [0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1] [0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0])))
+[0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1]
+
+(numerical-vector-to-string SP)
+(project-first-byte-from-double-byte SP)
+(project-second-byte-from-double-byte SP)
+
+(setq F [0 0 0 0 0 0 0 0])
+(twos-complement-BE [0 0 0 0 0 0 0 0])
+F
+(subtract-bytes-BE [0 0 0 0 0 1 0 1] [0 0 0 0 0 0 0 0])
+
+(defun random-byte ()
+  (let (newbyte i)
+    (setq newbyte (make-vector 8 0))
+    (setq i 0)
+    (while (< i 8)
+      (aset newbyte i (random 2))
+      (setq i (1+ i))
+    )
+    newbyte
+  )
+)
+
+(random-byte)
+
+(defun random-double-byte ()
+  (let (newdoubyte i)
+    (setq newdoubyte (make-vector 16 0))
+    (setq i 0)
+    (while (< i 16)
+      (aset newdoubyte i (random 2))
+      (setq i (1+ i))
+    )
+    newdoubyte
+  )
+)
+
+(numerical-vector-to-string (random-double-byte))
+
+(add-bytes-BE [0 1 1 1 1 1 1 1] [0 0 0 0 0 0 0 1])
+(insert (report-flags))S = 1, Z = 0, P = 1, C = 0
+
+(defun report-flags ()
+  (concat "S = " (number-to-string (what-is-sign-flag)) ", Z = " (number-to-string (what-is-zero-flag)) ", P = " (number-to-string (what-is-parity-flag)) ", C = " (number-to-string (what-is-carry-flag)))
+)
+
+(report-flags)
+
+(subtract-bytes-BE [0 1 1 1 1 1 1 1] [1 1 1 1 1 1 1 1])
+(print-flags)
+S = 1, Z = 0, P = 1, C = 1
+
+
+(1- 5)
+
+* See also
+- [[Z-80 and 8080 Assembly Language Programming#9.1]]
